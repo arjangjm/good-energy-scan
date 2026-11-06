@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lightning bolt smiley: bolt eyes, curved smile, cheek lines -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="22"
+        android:translateY="22">
+        <path
+            android:fillColor="#FFCE38"
+            android:pathData="M2,32a30,30 0,1 0,60 0a30,30 0,1 0,-60 0" />
+        <path
+            android:fillColor="#0F1923"
+            android:pathData="M24,12L19,22H23L21.5,30L29,19H25L28,12Z" />
+        <path
+            android:fillColor="#0F1923"
+            android:pathData="M41,12L36,22H40L38.5,30L46,19H42L45,12Z" />
+        <path
+            android:strokeColor="#0F1923"
+            android:strokeWidth="4.5"
+            android:strokeLineCap="round"
+            android:pathData="M19,40Q32,53 45,40" />
+        <path
+            android:strokeColor="#0F1923"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M14.5,36.5L16.5,40.5M49.5,36.5L47.5,40.5" />
+    </group>
+</vector>

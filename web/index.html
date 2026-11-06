@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Good Energy | Scan the Can</title>
+<meta name="description" content="The first drink that pays you to drink it. Scan the can, hear the chirp, take 33% back.">
+<meta name="theme-color" content="#0F1923">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#smiley"/></svg>
+    <span>good energy</span>
+  </div>
+  <button class="wallet-btn" id="walletBtn" type="button">Connect wallet</button>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="kicker">For the least employable generation</p>
+    <h1>The first drink that pays you to drink it.</h1>
+    <p class="sub">Scan the can. Hear the chirp. Take 33% back, on us.</p>
+  </section>
+
+  <div class="grid">
+    <div class="col">
+      <section class="card balance" aria-live="polite">
+        <p class="label">Back so far <span class="pill">Demo</span></p>
+        <p class="money" id="balance">$0.00</p>
+        <div class="meter" id="meter" role="progressbar" aria-label="Progress to your next free can" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="meterFill"></span></div>
+        <p class="meter-note" id="meterNote">$2.99 to your next can on us</p>
+        <div class="stats">
+          <div><b id="statCans">0</b><span>cans scanned</span></div>
+          <div><b id="statFree">0</b><span>free cans</span></div>
+          <div><b id="statStreak">0</b><span>day streak</span></div>
+        </div>
+        <p class="wallet-line" id="walletLine"></p>
+        <span class="float" id="float" aria-hidden="true"></span>
+      </section>
+
+      <section class="scan" aria-label="Scan a can">
+        <div class="flavors" id="flavors" role="radiogroup" aria-label="Pick your flavor"></div>
+        <button class="scan-btn" id="scanBtn" type="button">
+          <svg class="can" viewBox="0 0 56 92" aria-hidden="true">
+            <rect x="8" y="10" width="40" height="78" rx="9" fill="#0F1923"/>
+            <rect x="11" y="5" width="34" height="9" rx="4" fill="#0F1923"/>
+            <rect x="21" y="1" width="14" height="6" rx="3" fill="none" stroke="#0F1923" stroke-width="2.5"/>
+            <use href="#smiley" x="14" y="30" width="28" height="28"/>
+            <rect x="8" y="70" width="40" height="4" fill="#FFCE38"/>
+          </svg>
+          <span id="scanLabel">Scan the can</span>
+        </button>
+        <p class="hint">Tap to scan a demo can.</p>
+        <form class="code" id="codeForm" autocomplete="off">
+          <label for="codeInput">Got a code under the tab?</label>
+          <div class="row">
+            <input id="codeInput" name="code" type="text" placeholder="GE-XXXX-XXXX" maxlength="24" autocapitalize="characters" spellcheck="false">
+            <button type="submit">Claim</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="steps" aria-label="How it works">
+        <div>Drink.</div><div>Scan.</div><div>Earn.</div><div>Repeat!</div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card calc">
+        <h2>Played to paid</h2>
+        <label for="perDay">Cans a day: <b id="perDayOut">1</b> <em id="perDayNote"></em></label>
+        <input type="range" id="perDay" min="1" max="10" value="1">
+        <div class="calc-grid">
+          <div><b id="calcMonth">$29.70</b><span>back a month</span></div>
+          <div><b id="calcYear">$361.35</b><span>back a year</span></div>
+          <div><b id="calcFree">120</b><span>free cans a year</span></div>
+        </div>
+        <p class="fine">Demo math at 33% back on a $2.99 can. Rates can change.</p>
+      </section>
+
+      <section class="card ledger">
+        <div class="ledger-head">
+          <h2>Public ledger</h2>
+          <span class="fine">We send every dollar in public.</span>
+        </div>
+        <ol id="ledger"></ol>
+        <p class="empty" id="ledgerEmpty">No scans yet. Crack one open.</p>
+      </section>
+    </div>
+  </div>
+
+  <section class="pillars" aria-label="What we stand for">
+    <article><h3>Free Will Maxx</h3><p>No norms. No permission. Live like no one's watching.</p></article>
+    <article><h3>Touch Grass</h3><p>Unplug. Go outside. Have more fun.</p></article>
+    <article><h3>Be a Do Gooder</h3><p>Push positivity, get positivity. Simple.</p></article>
+  </section>
+
+  <section class="actions">
+    <button id="shareBtn" type="button" class="ghost">Share my cut</button>
+    <button id="resetBtn" type="button" class="ghost danger">Reset demo</button>
+  </section>
+</main>
+
+<footer>
+  <p class="outro">From getting played to getting paid.</p>
+  <p class="fine">Demo build. No real money moves. Scan payouts are 18+. Crypto cashback paid in SOL.
+    <a href="https://drinkgoodenergy.com" target="_blank" rel="noopener">drinkgoodenergy.com</a></p>
+</footer>
+
+<div class="flash" id="flash" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#smiley"/></svg></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="ageGate" aria-labelledby="ageTitle">
+  <form method="dialog">
+    <h2 id="ageTitle">Quick check</h2>
+    <p>Scan payouts are 18+. Are you 18 or older?</p>
+    <div class="row end">
+      <button value="no" class="ghost">Not yet</button>
+      <button value="yes" class="solid">I'm 18+</button>
+    </div>
+  </form>
+</dialog>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="smiley" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="30" fill="#FFCE38"/>
+    <path d="M24 12 L19 22 H23 L21.5 30 L29 19 H25 L28 12 Z" fill="#0F1923"/>
+    <path d="M41 12 L36 22 H40 L38.5 30 L46 19 H42 L45 12 Z" fill="#0F1923"/>
+    <path d="M19 40 Q32 53 45 40" fill="none" stroke="#0F1923" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M14.5 36.5 L16.5 40.5 M49.5 36.5 L47.5 40.5" fill="none" stroke="#0F1923" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<script src="app.js"></script>
+</body>
+</html>
