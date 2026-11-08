@@ -61,13 +61,14 @@ You need JDK 17 or newer and the Android SDK (platform 36).
 ./gradlew testDebugUnitTest assembleRelease
 ```
 
-The APK lands in `app/build/outputs/apk/release/app-release.apk`. It's signed with the debug key so it installs on any emulator. Use your own key for a store release. GitHub Actions also builds it on every push.
+The APK lands in `app/build/outputs/apk/release/app-release.apk`. Without a signing key it's signed with the debug key, so it installs on any emulator. For a store build, copy `keystore.properties.example` to `keystore.properties` and fill in your key. GitHub Actions also builds it on every push.
 
 ## Notes
 
 - Demo build. No real money moves. The app only asks the wallet to connect and sign messages. It never sends a transaction.
 - The wallet connects on Solana mainnet so it works with any wallet out of the box. To use devnet, change `blockchain` in `MainActivity.kt` to `Solana.Devnet`.
 - Scan payouts are 18+.
+- [Privacy Policy](PRIVACY.md) and [Terms of Use](TERMS.md).
 - More at [drinkgoodenergy.com](https://drinkgoodenergy.com).
 
 ## License

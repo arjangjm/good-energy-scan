@@ -6,3 +6,8 @@ captures/
 .idea/
 *.iml
 .DS_Store
+
+# Signing key and its passwords. Never commit these.
+keystore.properties
+*.jks
+*.keystore
