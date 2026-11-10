@@ -1,6 +1,6 @@
 # Build report
 
-Last updated: Nov 10, 2026, 02:31 (Sao Paulo).
+Last updated: Nov 10, 2026, 19:10 (Sao Paulo).
 
 ## Status
 
@@ -9,10 +9,10 @@ Last updated: Nov 10, 2026, 02:31 (Sao Paulo).
 | Claim site | Live at https://ge-scan.vercel.app |
 | Payout | $0.99 a scan, paid in SOL at Pyth's SOL/USD price when the claim runs. Switched from USDC on Nov 10. |
 | Automated tests | 45 unit and database tests pass, 5 browser tests pass |
-| Treasury | `7JF86zcnGQ2qzsU3B5MVr9RwakqmwfKJxrcKRRE3tM1T` holds 0.03 SOL (about $2.58). That covers 2 scans. |
+| Treasury | `7JF86zcnGQ2qzsU3B5MVr9RwakqmwfKJxrcKRRE3tM1T` started with 0.03 SOL. After 2 payouts it holds about 0.0068 SOL. |
 | Mainnet dry run | Passes. A real $0.99 payout (0.01152 SOL at $85.94) to Arjang's wallet was built and simulated on mainnet: valid, 13,232 compute units, exact amount. Nothing was sent. |
-| iPhone test | Ready. 4 codes minted (`codes-iphone-test.csv`), sheet at `sheets/good-energy-iphone-test.pdf`. The 0.03 SOL pays 2 of them. |
-| Leftover SOL | Goes back to `6vhUQhSt4457WLpYJPZM7xUnsmV2RCQHnqudEeiMDQqi` with the sweep in RUNBOOK. Arjang runs it. |
+| iPhone test | Ran Nov 10. Two $0.99 payouts confirmed on mainnet (scans #37 and #38). |
+| Leftover SOL | Goes back to Arjang's wallet with the sweep in RUNBOOK. Arjang runs it. |
 
 ## Calls made during the build (rulings)
 
@@ -27,7 +27,7 @@ Last updated: Nov 10, 2026, 02:31 (Sao Paulo).
 9. Test rows in the database are marked failed or void, not deleted. The app's database role cannot delete, by design. They do not count toward limits. Scan numbers start in the 20s because of them.
 10. Broadcast waits 18 seconds inside a request, not 25, to stay inside the 30 second function limit. The status poll finishes anything still in flight.
 11. The visual pass with Impeccable is not done. The page uses the brand colors and smiley and is tidy, but a design pass is still open.
-12. The branch is committed on the Mac but not pushed. The repo is public, so pushing is Arjang's call.
+12. The branch is on GitHub, pushed on Nov 10 when Arjang asked. The repo is public, so this report leaves out personal wallet addresses.
 13. Payouts are SOL, not USDC (Arjang's call, Nov 10). The amount is the code's dollar value at Pyth's SOL/USD price when the claim runs, rounded down. Pyth's web API now needs a key, so the app reads Pyth's price account on Solana through the RPC it already uses. Checked against Coinbase: $86.13 vs $86.11.
 14. A price over 5 minutes old, over 2% uncertain, or outside $5 to $10,000 fails the claim and frees the code. It does not pause payouts, because it clears by itself.
 15. The 1-cent mainnet test is replaced by a dry run that simulates a $0.99 payout and sends nothing. A 1-cent SOL payout to a new wallet would break Solana's minimum balance rule, and I don't send funds myself.
@@ -37,6 +37,5 @@ Last updated: Nov 10, 2026, 02:31 (Sao Paulo).
 
 ## Not done yet
 
-- The iPhone test.
 - Final reconcile of payouts against the treasury balance.
 - Returning the leftover SOL (Arjang runs the sweep).
