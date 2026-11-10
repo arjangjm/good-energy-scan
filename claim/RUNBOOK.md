@@ -7,12 +7,17 @@
 | See the treasury balance and payout state | `curl -H "authorization: Bearer $T" $B/api/admin/health` |
 | Stop all payouts now | `curl -X POST -H "authorization: Bearer $T" $B/api/admin/pause` |
 | Start them again | `curl -X POST -H "authorization: Bearer $T" $B/api/admin/resume` |
-| Mint codes | `npx tsx scripts/mint-test-codes.ts .env.production.local <count> <batch> <units>` |
+| Mint codes | `npx tsx scripts/mint-test-codes.ts .env.production.local <count> <batch> <units>` (990000 = $0.99) |
+| Check a payout without sending it | `npx tsx scripts/dry-run-mainnet.ts .env.production.local <wallet>` |
 | Empty the treasury to a wallet | `curl -X POST -H "authorization: Bearer $T" -H "content-type: application/json" -d '{"toWallet":"<address>","confirm":"SWEEP"}' $B/api/admin/sweep` |
 
 ## Low balance
 
-When the treasury has less USDC than a payout, or under 0.0023 SOL, the next claim pauses payouts by itself. The scanner sees "Payouts are paused for a minute" and their can stays good. Top up the treasury, then call `resume`.
+When the treasury can't cover the next payout plus a 0.001 SOL floor, the next claim pauses payouts by itself. The scanner sees "Payouts are paused for a minute" and their can stays good. Top up the treasury with SOL, then call `resume`.
+
+## SOL price
+
+Payouts use Pyth's SOL/USD price, read from Solana (account `7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE`). If the price is more than 5 minutes old, more than 2% uncertain, or outside $5 to $10,000, the claim fails with "Something went wrong" and the can stays good. Payouts don't pause. It clears when Pyth posts a fresh price.
 
 ## A payout looks stuck
 

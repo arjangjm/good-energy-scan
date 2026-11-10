@@ -1,21 +1,23 @@
 # Build report
 
-Last updated: Nov 10, 2026, 02:00 (Sao Paulo).
+Last updated: Nov 10, 2026, 02:31 (Sao Paulo).
 
 ## Status
 
 | Step | State |
 |---|---|
 | Claim site | Live at https://ge-scan.vercel.app |
-| Automated tests | 38 unit and database tests pass, 5 browser tests pass |
-| Treasury | `7JF86zcnGQ2qzsU3B5MVr9RwakqmwfKJxrcKRRE3tM1T`. Waiting for 4 USDC and 0.01 SOL. |
-| 1-cent mainnet test | Code minted (`codes-smoke.csv`). Runs once the treasury is funded: `npx tsx scripts/smoke-mainnet.ts .env.production.local codes-smoke.csv` |
-| iPhone test | 4 codes minted (`codes-iphone-test.csv`). Sheet built: `sheets/good-energy-iphone-test.pdf` |
+| Payout | $0.99 a scan, paid in SOL at Pyth's SOL/USD price when the claim runs. Switched from USDC on Nov 10. |
+| Automated tests | 45 unit and database tests pass, 5 browser tests pass |
+| Treasury | `7JF86zcnGQ2qzsU3B5MVr9RwakqmwfKJxrcKRRE3tM1T` holds 0.03 SOL (about $2.58). That covers 2 scans. |
+| Mainnet dry run | Passes. A real $0.99 payout (0.01152 SOL at $85.94) to Arjang's wallet was built and simulated on mainnet: valid, 13,232 compute units, exact amount. Nothing was sent. |
+| iPhone test | Ready. 4 codes minted (`codes-iphone-test.csv`), sheet at `sheets/good-energy-iphone-test.pdf`. The 0.03 SOL pays 2 of them. |
+| Leftover SOL | Goes back to `6vhUQhSt4457WLpYJPZM7xUnsmV2RCQHnqudEeiMDQqi` with the sweep in RUNBOOK. Arjang runs it. |
 
 ## Calls made during the build (rulings)
 
 1. Built on Arjang's Mac, not in the cloud workspace. The workspace cannot reach Vercel or the database port. Cost if wrong: none, the code is the same.
-2. Compute limit is 60,000 units, not the plan's 45,000. A payout that creates a token account measured 26,712, and that number moves with the address. Cost: at most 0.00006 SOL more per payout at the fee cap.
+2. Compute limit is 60,000 units, not the plan's 45,000. A payout that creates a token account measured 26,712, and that number moves with the address. Cost: at most 0.00006 SOL more per payout at the fee cap. (Now 30,000. See 16.)
 3. Content-Security-Policy allows inline scripts. Next.js needs them to start the page. Cost if wrong: weaker protection against script injection. The pages render no user-written HTML.
 4. One call to `/api/connect/prepare` returns both wallet links, and it needs the 18+ box ticked. The plan had one call per wallet. Cost: none.
 5. Env vars are set for Production only, not Preview. A preview build should never hold the treasury key.
@@ -26,8 +28,15 @@ Last updated: Nov 10, 2026, 02:00 (Sao Paulo).
 10. Broadcast waits 18 seconds inside a request, not 25, to stay inside the 30 second function limit. The status poll finishes anything still in flight.
 11. The visual pass with Impeccable is not done. The page uses the brand colors and smiley and is tidy, but a design pass is still open.
 12. The branch is committed on the Mac but not pushed. The repo is public, so pushing is Arjang's call.
+13. Payouts are SOL, not USDC (Arjang's call, Nov 10). The amount is the code's dollar value at Pyth's SOL/USD price when the claim runs, rounded down. Pyth's web API now needs a key, so the app reads Pyth's price account on Solana through the RPC it already uses. Checked against Coinbase: $86.13 vs $86.11.
+14. A price over 5 minutes old, over 2% uncertain, or outside $5 to $10,000 fails the claim and frees the code. It does not pause payouts, because it clears by itself.
+15. The 1-cent mainnet test is replaced by a dry run that simulates a $0.99 payout and sends nothing. A 1-cent SOL payout to a new wallet would break Solana's minimum balance rule, and I don't send funds myself.
+16. Compute limit is now 30,000 units. A SOL payout measured 13,232, in tests and on mainnet.
+17. The treasury keeps a 0.001 SOL floor (0.00065 SOL rent plus fees). When it can't cover a payout plus the floor, payouts pause and the can stays good.
+18. No new database columns. Each payout's SOL amount is on chain in its transaction.
 
 ## Not done yet
 
-- Mainnet 1-cent test and the iPhone test (waiting on funds).
+- The iPhone test.
 - Final reconcile of payouts against the treasury balance.
+- Returning the leftover SOL (Arjang runs the sweep).
