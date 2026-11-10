@@ -1,0 +1,10 @@
+.env*
+!.env.example
+node_modules
+.next
+.venv
+tests
+e2e
+sheets
+codes-*.csv
+fund-*.png
