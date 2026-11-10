@@ -11,3 +11,4 @@ next-env.d.ts
 codes-*.csv
 sheets/
 fund-*.png
+.env*

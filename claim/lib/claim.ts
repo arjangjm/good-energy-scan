@@ -66,7 +66,8 @@ async function payClaim(claim: Claim, chain: ChainClient): Promise<ClaimResult> 
     return resumeClaim(claim.id, chain);
   }
   await hooks.afterSigned(claim.id);
-  const outcome = await broadcastUntilSettled(chain, signed.rawBase64, signed.signature, signed.lastValidBlockHeight);
+  // Stop well inside the 30 second function limit. If it is still in flight, the status poll takes over.
+  const outcome = await broadcastUntilSettled(chain, signed.rawBase64, signed.signature, signed.lastValidBlockHeight, { timeoutMs: 18_000 });
   return settle({ ...claim, attempts: claim.attempts + 1 }, signed.signature, outcome, chain);
 }
 

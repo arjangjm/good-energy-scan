@@ -28,5 +28,8 @@
     "tsx": "^4",
     "typescript": "^5",
     "vitest": "^3"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
