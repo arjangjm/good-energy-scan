@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Connection, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
-import {
-  createAssociatedTokenAccountIdempotentInstruction, createCloseAccountInstruction, createTransferCheckedInstruction,
-  getAssociatedTokenAddressSync,
-} from '@solana/spl-token';
 import { getEnv } from '@/lib/env';
 import { claimUrl, generateCode, hashCode } from '@/lib/codes';
 import { claimStats, getPayoutsEnabled, insertCodes, logEvent, setPayoutsEnabled } from '@/lib/db';
@@ -23,10 +19,9 @@ type Ctx = { params: Promise<{ action: string }> };
 export async function GET(req: NextRequest, ctx: Ctx) {
   if (!isAdmin(req)) return notFound();
   if ((await ctx.params).action !== 'health') return notFound();
-  const env = getEnv();
-  const bal = await getChain().balances(treasuryKeypair().publicKey, new PublicKey(env.USDC_MINT));
+  const lamports = await getChain().balance(treasuryKeypair().publicKey);
   return NextResponse.json({
-    treasury: treasuryAddress(), lamports: Number(bal.lamports), usdcUnits: Number(bal.units),
+    treasury: treasuryAddress(), lamports: Number(lamports),
     payoutsEnabled: await getPayoutsEnabled(), ...(await claimStats()),
   }, noStore);
 }
@@ -60,19 +55,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     if (body.confirm !== 'SWEEP' || !isValidRecipient(to, treasuryAddress())) return NextResponse.json({ error: 'bad_request' }, { status: 400 });
     await setPayoutsEnabled(false);
     const conn = new Connection(env.RPC_URL, 'confirmed');
-    const treasury = treasuryKeypair(), mint = new PublicKey(env.USDC_MINT), dest = new PublicKey(to);
-    const from = getAssociatedTokenAddressSync(mint, treasury.publicKey), toAta = getAssociatedTokenAddressSync(mint, dest);
+    const treasury = treasuryKeypair(), dest = new PublicKey(to);
     const sigs: string[] = [];
-    const bal = await getChain().balances(treasury.publicKey, mint);
-    if (await conn.getAccountInfo(from)) {
-      const tx = new Transaction();
-      if (bal.units > 0n) tx.add(
-        createAssociatedTokenAccountIdempotentInstruction(treasury.publicKey, toAta, dest, mint),
-        createTransferCheckedInstruction(from, mint, toAta, treasury.publicKey, bal.units, 6),
-      );
-      tx.add(createCloseAccountInstruction(from, treasury.publicKey, treasury.publicKey)); // gets the account rent back
-      sigs.push(await sendAndConfirmTransaction(conn, tx, [treasury], { commitment: 'confirmed' }));
-    }
     const lamports = await conn.getBalance(treasury.publicKey, 'confirmed');
     if (lamports > 5000) {
       const tx = new Transaction().add(SystemProgram.transfer({ fromPubkey: treasury.publicKey, toPubkey: dest, lamports: lamports - 5000 }));

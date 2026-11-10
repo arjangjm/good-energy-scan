@@ -32,7 +32,7 @@ describe('admin api @db', () => {
   });
   it('reports health', async () => {
     const j = await (await call('health', 'GET', getEnv().ADMIN_TOKEN)).json();
-    for (const k of ['treasury', 'lamports', 'usdcUnits', 'payoutsEnabled', 'claimsLastHour', 'pending']) expect(j).toHaveProperty(k);
+    for (const k of ['treasury', 'lamports', 'payoutsEnabled', 'claimsLastHour', 'pending']) expect(j).toHaveProperty(k);
   });
   it('refuses a sweep without the confirm word', async () => {
     expect((await call('sweep', 'POST', getEnv().ADMIN_TOKEN, { toWallet: '11111111111111111111111111111111' })).status).toBe(400);

@@ -7,7 +7,7 @@ import { broadcastUntilSettled } from '@/lib/solana/broadcast';
 const fast = { pollMs: 10, resendMs: 30 };
 async function sign(chain: LiteChain) {
   const bh = await chain.latestBlockhash();
-  return buildSignedPayout({ treasury: chain.treasury, mint: chain.mint.publicKey, recipient: Keypair.generate().publicKey, amount: 990000n, memo: 'Good Energy | scan #1 | 33% back', ...bh, microLamports: 50_000 });
+  return buildSignedPayout({ treasury: chain.treasury, recipient: Keypair.generate().publicKey, lamports: 9_900_000n, memo: 'Good Energy | scan #1 | 33% back', ...bh, microLamports: 50_000 });
 }
 
 describe('broadcastUntilSettled', () => {
@@ -16,8 +16,8 @@ describe('broadcastUntilSettled', () => {
     const s = await sign(chain);
     expect(await broadcastUntilSettled(chain, s.rawBase64, s.signature, s.lastValidBlockHeight, fast)).toBe('confirmed');
   });
-  it('fails when the treasury has no USDC', async () => {
-    const chain = new LiteChain(0n);
+  it('fails when the treasury cannot cover the payout', async () => {
+    const chain = new LiteChain(5_000_000n);
     const s = await sign(chain);
     expect(await broadcastUntilSettled(chain, s.rawBase64, s.signature, s.lastValidBlockHeight, fast)).toBe('failed');
   });

@@ -1,13 +1,9 @@
-import { ComputeBudgetProgram, Keypair, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import {
-  createAssociatedTokenAccountIdempotentInstruction, createTransferCheckedInstruction, getAssociatedTokenAddressSync,
-} from '@solana/spl-token';
+import { ComputeBudgetProgram, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 export const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
-export const USDC_DECIMALS = 6;
-// Measured about 31,000 units when the payout also creates the token account. 60,000 leaves room.
-export const COMPUTE_UNIT_LIMIT = 60_000;
+// Measured about 13,200 units for the transfer plus the memo. 30,000 leaves room.
+export const COMPUTE_UNIT_LIMIT = 30_000;
 
 // A wallet we can pay: a real ed25519 address that is not the treasury itself.
 export function isValidRecipient(address: string, treasury?: string): boolean {
@@ -20,17 +16,14 @@ export function isValidRecipient(address: string, treasury?: string): boolean {
 }
 
 export function buildSignedPayout(a: {
-  treasury: Keypair; mint: PublicKey; recipient: PublicKey; amount: bigint; memo: string;
+  treasury: Keypair; recipient: PublicKey; lamports: bigint; memo: string;
   blockhash: string; lastValidBlockHeight: number; microLamports: number;
 }): { signature: string; rawBase64: string; lastValidBlockHeight: number } {
-  const from = getAssociatedTokenAddressSync(a.mint, a.treasury.publicKey);
-  const to = getAssociatedTokenAddressSync(a.mint, a.recipient);
   const tx = new Transaction();
   tx.add(
     ComputeBudgetProgram.setComputeUnitLimit({ units: COMPUTE_UNIT_LIMIT }),
     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: a.microLamports }),
-    createAssociatedTokenAccountIdempotentInstruction(a.treasury.publicKey, to, a.recipient, a.mint),
-    createTransferCheckedInstruction(from, a.mint, to, a.treasury.publicKey, a.amount, USDC_DECIMALS),
+    SystemProgram.transfer({ fromPubkey: a.treasury.publicKey, toPubkey: a.recipient, lamports: a.lamports }),
     new TransactionInstruction({ programId: MEMO_PROGRAM_ID, keys: [], data: Buffer.from(a.memo, 'utf8') }),
   );
   tx.recentBlockhash = a.blockhash;

@@ -14,14 +14,13 @@ import { COOKIE, hashToken } from '@/lib/session';
 import { GET as callback } from '@/app/cb/[state]/route';
 
 const BATCH = 'test-claim';
-const mint = Keypair.generate();
-process.env.USDC_MINT = mint.publicKey.toBase58(); // before the first getEnv()
+const PAY = 9_900_000n; // $0.99 at the test price of $100 per SOL
 let chain: LiteChain;
 let n = 0;
 const ip = () => `test-ip-${Date.now()}-${n++}`;
 const wallet = () => Keypair.generate().publicKey;
 
-beforeAll(() => { chain = new LiteChain(20_000_000n, treasuryKeypair(), BigInt(LAMPORTS_PER_SOL), mint); });
+beforeAll(() => { chain = new LiteChain(BigInt(LAMPORTS_PER_SOL), treasuryKeypair()); });
 afterAll(async () => { hooks.afterSigned = async () => {}; await retireBatch(BATCH); await setPayoutsEnabled(true); await closeDb(); });
 
 describe('claim service @db', () => {
@@ -30,12 +29,12 @@ describe('claim service @db', () => {
     const r = await processClaim({ code, wallet: w.toBase58(), ipHash: ip() }, chain);
     expect(r.status).toBe('paid');
     expect(r.amountUsd).toBe('0.99');
-    expect(chain.tokenBalance(w)).toBe(990000n);
+    expect(chain.lamportsOf(w)).toBe(PAY);
     expect((await getClaim(r.claimId!))!.status).toBe('confirmed');
     expect((await lookupCode(hashCode(code, getEnv().CODE_PEPPER)))!.status).toBe('paid');
     const again = await processClaim({ code, wallet: w.toBase58(), ipHash: ip() }, chain);
     expect(again.status).toBe('claimed');
-    expect(chain.tokenBalance(w)).toBe(990000n);
+    expect(chain.lamportsOf(w)).toBe(PAY);
   });
 
   it('pays once when the same wallet taps Claim twice at the same moment', async () => {
@@ -45,14 +44,14 @@ describe('claim service @db', () => {
       processClaim({ code, wallet: w.toBase58(), ipHash: ip() }, chain),
     ]);
     expect([a.status, b.status]).toContain('paid');
-    expect(chain.tokenBalance(w)).toBe(990000n);
+    expect(chain.lamportsOf(w)).toBe(PAY);
   });
 
   it('pays one wallet when two wallets race for one code', async () => {
     const code = await newCode(BATCH), w1 = wallet(), w2 = wallet();
     const rs = await Promise.all([w1, w2].map((w) => processClaim({ code, wallet: w.toBase58(), ipHash: ip() }, chain)));
     expect(rs.map((r) => r.status).sort()).toEqual(['claimed', 'paid']);
-    expect((chain.tokenBalance(w1) ?? 0n) + (chain.tokenBalance(w2) ?? 0n)).toBe(990000n);
+    expect(chain.lamportsOf(w1) + chain.lamportsOf(w2)).toBe(PAY);
   });
 
   it('finishes with the same signature when the server dies right after signing', async () => {
@@ -63,7 +62,7 @@ describe('claim service @db', () => {
     expect(first.status).toBe('pending');
     const signedSig = (await getClaim(first.claimId!))!.signature;
     expect(signedSig).toBeTruthy();
-    expect(chain.tokenBalance(w)).toBeNull(); // nothing sent yet
+    expect(chain.lamportsOf(w)).toBe(0n); // nothing sent yet
     let r = await resumeClaim(first.claimId!, chain);
     for (let i = 0; i < 3 && r.status !== 'paid'; i++) r = await resumeClaim(first.claimId!, chain);
     expect(r.status).toBe('paid');
@@ -71,7 +70,7 @@ describe('claim service @db', () => {
     const c = (await getClaim(first.claimId!))!;
     expect(c.prevSignatures).toEqual([]);
     expect(c.attempts).toBe(1);
-    expect(chain.tokenBalance(w)).toBe(990000n);
+    expect(chain.lamportsOf(w)).toBe(PAY);
   });
 
   it('does not sign again while the first transaction can still land, and does once it cannot', async () => {
@@ -91,11 +90,11 @@ describe('claim service @db', () => {
     const c = (await getClaim(first.claimId!))!;
     expect(c.prevSignatures).toEqual([sigA]);
     expect(c.attempts).toBe(2);
-    expect(chain.tokenBalance(w)).toBe(990000n);
+    expect(chain.lamportsOf(w)).toBe(PAY);
   });
 
   it('pauses, and keeps the can good, when the treasury is empty', async () => {
-    const empty = new LiteChain(0n, treasuryKeypair(), BigInt(LAMPORTS_PER_SOL), mint);
+    const empty = new LiteChain(5_000_000n, treasuryKeypair()); // less than $0.99 plus the rent floor
     const code = await newCode(BATCH), w = wallet();
     try {
       const r = await processClaim({ code, wallet: w.toBase58(), ipHash: ip() }, empty);
@@ -105,6 +104,19 @@ describe('claim service @db', () => {
       expect((await processClaim({ code, wallet: w.toBase58(), ipHash: ip() }, chain)).status).toBe('paused');
     } finally { await setPayoutsEnabled(true); }
     expect((await processClaim({ code, wallet: w.toBase58(), ipHash: ip() }, chain)).status).toBe('paid');
+  });
+
+  it('pays nothing, keeps the can good, and does not pause, when the SOL price is stale', async () => {
+    const stale = new LiteChain(BigInt(LAMPORTS_PER_SOL), treasuryKeypair());
+    stale.setSolPrice(10_000_000_000n, Math.floor(Date.now() / 1000) - 3600);
+    const code = await newCode(BATCH), w = wallet();
+    const r = await processClaim({ code, wallet: w.toBase58(), ipHash: ip() }, stale);
+    expect(r.status).toBe('failed');
+    expect(stale.lamportsOf(w)).toBe(0n);
+    expect((await lookupCode(hashCode(code, getEnv().CODE_PEPPER)))!.status).toBe('available');
+    expect(await getPayoutsEnabled()).toBe(true);
+    expect((await processClaim({ code, wallet: w.toBase58(), ipHash: ip() }, chain)).status).toBe('paid');
+    expect(chain.lamportsOf(w)).toBe(PAY);
   });
 
   it('rejects a bad code and a bad wallet without touching the database', async () => {

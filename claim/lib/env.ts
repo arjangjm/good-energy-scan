@@ -4,7 +4,6 @@ import bs58 from 'bs58';
 const schema = z.object({
   PUBLIC_BASE_URL: z.string().url().transform((s) => s.replace(/\/+$/, '')),
   RPC_URL: z.string().url(),
-  USDC_MINT: z.string().min(32),
   TREASURY_SECRET_KEY: z.string().refine((s) => {
     try { return bs58.decode(s).length === 64; } catch { return false; }
   }, 'must be base58 of 64 bytes'),

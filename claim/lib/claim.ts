@@ -5,6 +5,7 @@ import { Claim, getClaim, logEvent, markConfirmed, markExpired, markFailed, mark
 import { ChainClient } from './solana/chain';
 import { broadcastUntilSettled, isExpired, Outcome } from './solana/broadcast';
 import { buildSignedPayout, isValidRecipient } from './solana/payout';
+import { readSolPrice, usdToLamports } from './solana/price';
 import { treasuryAddress, treasuryKeypair } from './treasury';
 
 export type ClaimResult = {
@@ -12,8 +13,8 @@ export type ClaimResult = {
   claimId?: string; signature?: string; amountUsd?: string; seq?: number;
 };
 
-// Rent floor for the treasury (650,240) + one new token account (1,488,440) + room for fees.
-export const MIN_TREASURY_LAMPORTS = 2_300_000n;
+// The treasury keeps its rent floor (650,240 lamports on mainnet now, 890,880 before the cut) plus room for fees.
+export const TREASURY_FLOOR_LAMPORTS = 1_000_000n;
 export const MAX_ATTEMPTS = 3;
 export const usd = (units: bigint) => (Number(units) / 1e6).toFixed(2);
 // Test seam: lets a test stop the flow right after the signature is saved.
@@ -46,19 +47,20 @@ async function payClaim(claim: Claim, chain: ChainClient): Promise<ClaimResult> 
     return { status: 'failed', claimId: claim.id };
   }
   const treasury = treasuryKeypair();
-  const mint = new PublicKey(getEnv().USDC_MINT);
-  const bal = await chain.balances(treasury.publicKey, mint);
-  if (bal.units < claim.amount || bal.lamports < MIN_TREASURY_LAMPORTS) {
+  // claim.amount is USD in millionths (990000 = $0.99), paid in SOL at Pyth's price right now.
+  const lamports = usdToLamports(claim.amount, await readSolPrice(chain));
+  const bal = await chain.balance(treasury.publicKey);
+  if (bal < lamports + TREASURY_FLOOR_LAMPORTS) {
     await markFailed(claim.id, 'treasury_low', true, ['reserved']);
     await setPayoutsEnabled(false);
-    await logEvent('treasury_low', { lamports: bal.lamports.toString(), units: bal.units.toString() });
+    await logEvent('treasury_low', { lamports: bal.toString(), needed: (lamports + TREASURY_FLOOR_LAMPORTS).toString() });
     return { status: 'paused' };
   }
   const recipient = new PublicKey(claim.wallet);
   const { blockhash, lastValidBlockHeight } = await chain.latestBlockhash();
   const microLamports = await chain.priorityFee([treasury.publicKey]).catch(() => 50_000);
   const signed = buildSignedPayout({
-    treasury, mint, recipient, amount: claim.amount, memo: `Good Energy | scan #${claim.seq} | 33% back`,
+    treasury, recipient, lamports, memo: `Good Energy | scan #${claim.seq} | 33% back`,
     blockhash, lastValidBlockHeight, microLamports,
   });
   // Save the signature BEFORE the first send. If another worker got here first, follow its transaction instead.

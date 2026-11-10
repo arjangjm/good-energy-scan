@@ -1,5 +1,4 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 
 // Thrown by sendRaw when the node simulated the transaction, it failed, and so it was never forwarded.
 export class SimulationFailed extends Error {}
@@ -11,7 +10,8 @@ export interface ChainClient {
   blockHeight(): Promise<number>;
   sendRaw(rawBase64: string, skipPreflight: boolean): Promise<void>;
   signatureStatus(sig: string): Promise<SigStatus>;
-  balances(owner: PublicKey, mint: PublicKey): Promise<{ lamports: bigint; units: bigint }>;
+  balance(owner: PublicKey): Promise<bigint>;
+  account(address: PublicKey): Promise<{ owner: PublicKey; data: Uint8Array } | null>;
   priorityFee(accounts: PublicKey[]): Promise<number>;
 }
 
@@ -40,14 +40,10 @@ export function rpcChain(rpcUrl: string): ChainClient {
       const done = s.confirmationStatus === 'confirmed' || s.confirmationStatus === 'finalized';
       return { ok: done, err: null }; // processed but not confirmed yet: neither ok nor failed
     },
-    async balances(owner, mint) {
-      const lamports = BigInt(await c.getBalance(owner, 'confirmed'));
-      let units = 0n;
-      try {
-        const b = await c.getTokenAccountBalance(getAssociatedTokenAddressSync(mint, owner), 'confirmed');
-        units = BigInt(b.value.amount);
-      } catch { /* no token account yet */ }
-      return { lamports, units };
+    balance: async (owner) => BigInt(await c.getBalance(owner, 'confirmed')),
+    async account(address) {
+      const a = await c.getAccountInfo(address, 'confirmed');
+      return a ? { owner: a.owner, data: a.data } : null;
     },
     async priorityFee(accounts) {
       const fees = (await c.getRecentPrioritizationFees({ lockedWritableAccounts: accounts }))

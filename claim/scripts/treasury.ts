@@ -1,6 +1,6 @@
 // The treasury is the wallet that pays scanners.
 //   npx tsx scripts/treasury.ts generate <envfile>   make a new key, save it in the env file, print only the address
-//   npx tsx scripts/treasury.ts address <envfile>    print the address and the two funding links
+//   npx tsx scripts/treasury.ts address <envfile>    print the address and a funding link
 import { readFileSync, writeFileSync } from 'node:fs';
 import { Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
@@ -13,7 +13,6 @@ const current = /^TREASURY_SECRET_KEY=(.*)$/m.exec(text)?.[1]?.trim() ?? '';
 function show(kp: Keypair) {
   const a = kp.publicKey.toBase58();
   console.log('treasury address:', a);
-  console.log('fund USDC:', `solana:${a}?amount=4&spl-token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&label=Good%20Energy%20test`);
   console.log('fund SOL: ', `solana:${a}?amount=0.01&label=Good%20Energy%20test`);
 }
 

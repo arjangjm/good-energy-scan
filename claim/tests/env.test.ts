@@ -5,7 +5,6 @@ import { parseEnv } from '@/lib/env';
 const good = {
   PUBLIC_BASE_URL: 'https://ge-scan.vercel.app/',
   RPC_URL: 'https://api.mainnet-beta.solana.com',
-  USDC_MINT: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
   TREASURY_SECRET_KEY: bs58.encode(new Uint8Array(64).fill(7)),
   CODE_PEPPER: 'ab'.repeat(32),
   ADMIN_TOKEN: 'x'.repeat(40),

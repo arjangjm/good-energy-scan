@@ -139,7 +139,7 @@ export default function ClaimPanel(p: Props) {
     <section className="card center" data-testid="paid">
       <p className="amount pop">+${amount}</p>
       <h1>in your wallet.</h1>
-      {result?.seq ? <p className="small">Scan #{result.seq}. Paid in USDC on Solana.</p> : null}
+      {result?.seq ? <p className="small">Scan #{result.seq}. Paid in SOL on Solana.</p> : null}
       <div className="stack">
         {sig ? <a className="btn" href={`https://solscan.io/tx/${sig}`} target="_blank" rel="noreferrer">See it on Solscan</a> : null}
         <Link className="btn alt" href="/">Scan another can</Link>
@@ -166,7 +166,7 @@ export default function ClaimPanel(p: Props) {
   if (ready) return (
     <section className="card">
       <h1>This can has ${amount} for you.</h1>
-      <p>33% back, paid in USDC to your Solana wallet. Every payout is public on Solana.</p>
+      <p>33% back, paid in SOL to your Solana wallet. Every payout is public on Solana.</p>
       <div className="stack">
         <button className="btn" onClick={claim}>Claim ${amount}</button>
         <p className="small center">to {short(p.wallet!)} · <button className="link" onClick={changeWallet}>change</button></p>
@@ -177,7 +177,7 @@ export default function ClaimPanel(p: Props) {
   return (
     <section className="card">
       <h1>This can has ${amount} for you.</h1>
-      <p>33% back, paid in USDC to your Solana wallet. Every payout is public on Solana.</p>
+      <p>33% back, paid in SOL to your Solana wallet. Every payout is public on Solana.</p>
       {p.walletError ? <p className="note">The wallet didn&apos;t connect. Try again.</p> : null}
       {err ? <p className="note">{err}</p> : null}
       <label className="check">
